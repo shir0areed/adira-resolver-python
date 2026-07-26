@@ -12,16 +12,16 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 def parse_args(argv):
     p = argparse.ArgumentParser(prog="adira-resolver", description="Resolve ADIRA manifest")
-    p.add_argument("--config", "-c", required=True, help="Path to resolver config TOML")
-    p.add_argument("--manifest", "-m", required=True, help="Path to manifest TOML (main file)")
+    p.add_argument("--config", "-c", default="./config.toml", help="Path to resolver config TOML")
     p.add_argument("--dest", "-d", default="adira_resolve", help="Resolve destination directory")
     p.add_argument("--dry-run", action="store_true", help="Show actions without performing them")
+    p.add_argument("manifests", nargs=1, help="Path to manifest TOML (main file)")
     return p.parse_args(argv)
 
 def main(argv=None):
     args = parse_args(argv or sys.argv[1:])
     config = load_config(args.config)
-    manifest = load_manifest_with_additions(args.manifest)
+    manifest = load_manifest_with_additions(args.manifests[0])
     os.makedirs(args.dest, exist_ok=True)
 
     # For each dependency, dispatch to format resolver
