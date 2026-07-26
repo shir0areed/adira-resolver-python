@@ -31,6 +31,13 @@ def main(argv=None):
             logger.error("Dependency %s has no format; skipping", dep_id)
             continue
 
+        # merge formats.<fmt> defaults into dep.<fmt>
+        fmt_defaults = manifest.get("formats", {}).get(fmt, {})
+        dep_fmt_params = dep.get(fmt, {})
+        merged_fmt_params = fmt_defaults.copy()
+        merged_fmt_params.update(dep_fmt_params)
+        dep[fmt] = merged_fmt_params
+
         logger.info("Resolving %s (format=%s)", dep_id, fmt)
         resolver_cls = get_resolver_class(fmt)
         if resolver_cls is None:
