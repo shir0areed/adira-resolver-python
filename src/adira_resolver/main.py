@@ -5,7 +5,7 @@ import logging
 from .config import load_config
 from .manifest import load_manifest_with_additions
 from .artifact_server import ArtifactServerFactory
-from .formats import base as formats_base
+from .formats.common import get_resolver_class
 
 logger = logging.getLogger("adira_resolver")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -32,7 +32,7 @@ def main(argv=None):
             continue
 
         logger.info("Resolving %s (format=%s)", dep_id, fmt)
-        resolver_cls = formats_base.get_resolver_class(fmt)
+        resolver_cls = get_resolver_class(fmt)
         if resolver_cls is None:
             logger.error("No resolver for format '%s' (dependency %s)", fmt, dep_id)
             continue
