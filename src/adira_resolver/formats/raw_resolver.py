@@ -1,22 +1,25 @@
 import os
-import shutil
-from pathlib import Path
-from .base import BaseResolver
-import logging
-logger = logging.getLogger("adira_resolver.formats.raw")
 
-class RawResolver(BaseResolver):
-    def resolve(self):
-        dst_root = self.config.get("formats", {}).get("raw", {}).get("dst_root") or self.dep.get("raw", {}).get("dst") or "."
-        dst_dir = Path(self.dest_root) / dst_root / (self.dep.get("raw", {}).get("dst") or self.dep_id)
-        dst_dir.mkdir(parents=True, exist_ok=True)
+class RawResolver:
+    def __init__(self, dep_id, identity, fmt_params, dest_root):
+        self.dep_id = dep_id
+        self.identity = identity
+        self.fmt_params = fmt_params
+        self.dest_root = dest_root
 
-        # identity mapping: artifact reference may be provided in dep (e.g., dep['ref'])
-        reference = self.dep.get("ref") or self.dep.get("artifact") or self.dep_id
-        # download to temp file then extract/copy as-is
-        tmp_path = Path(self.dest_root) / f"{self.dep_id}.download"
-        self.artifact_server.fetch(reference, str(tmp_path))
-        # if it's an archive but format is raw, we just place the file
-        final_path = dst_dir / tmp_path.name
-        shutil.move(str(tmp_path), final_path)
-        logger.info("Placed raw artifact at %s", final_path)
+    def pre_fetch_process(self):
+        """
+        raw は「そのまま最終レイヤーに置く」ので、
+        output_path は最終配置先のパスになる。
+        """
+        filename = self.fmt_params.get("filename", self.dep_id)
+        output_path = os.path.join(self.dest_root, filename)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        return output_path
+
+    def post_fetch_process(self, server_ret):
+        """
+        raw は fetch したものがそのまま最終レイヤーなので何もしない。
+        server_ret は oci_server.fetch の返り値（output_path）だが使わなくてもよい。
+        """
+        return

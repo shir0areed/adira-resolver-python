@@ -4,7 +4,7 @@ import os
 import logging
 from .config import load_config
 from .manifest import load_manifest_with_additions
-from .artifact_server import ArtifactServerFactory
+from .protocols.common import get_server_class
 from .formats.common import get_resolver_class
 
 logger = logging.getLogger("adira_resolver")
@@ -26,7 +26,14 @@ def main(argv=None):
 
     # For each dependency, dispatch to format resolver
     for dep_id, dep in manifest["dependencies"].items():
-        fmt = dep.get("format")
+        identity = {
+            "vendor": dep.get("vendor"),
+            "artifact": dep.get("artifact"),
+            "version": dep.get("version"),
+            "format": dep.get("format"),
+        }
+
+        fmt = identity.get("format")
         if not fmt:
             logger.error("Dependency %s has no format; skipping", dep_id)
             continue
@@ -34,28 +41,49 @@ def main(argv=None):
         # merge formats.<fmt> defaults into dep.<fmt>
         fmt_defaults = manifest.get("formats", {}).get(fmt, {})
         dep_fmt_params = dep.get(fmt, {})
-        merged_fmt_params = fmt_defaults.copy()
-        merged_fmt_params.update(dep_fmt_params)
-        dep[fmt] = merged_fmt_params
+        fmt_params = fmt_defaults.copy()
+        fmt_params.update(dep_fmt_params)
 
         logger.info("Resolving %s (format=%s)", dep_id, fmt)
-        resolver_cls = get_resolver_class(fmt)
-        if resolver_cls is None:
-            logger.error("No resolver for format '%s' (dependency %s)", fmt, dep_id)
+
+        server_entries = config.get("formats", {}).get(fmt, [])
+        if not isinstance(server_entries, list):
+            logger.error("formats.%s must be an array of server configs", fmt)
             continue
 
-        # create artifact server client for this format
-        server_cfg = config.get("formats", {}).get(fmt, {})
-        artifact_server = ArtifactServerFactory.create(fmt, server_cfg)
+        for server_cfg in server_entries:
+            protocol = server_cfg.get("protocol")
+            if not protocol:
+                logger.error("Server entry for format %s has no 'protocol' field", fmt)
+                continue
 
-        resolver = resolver_cls(dep_id=dep_id, dep=dep, dest_root=args.dest, artifact_server=artifact_server, config=config)
-        if args.dry_run:
-            resolver.dry_run()
+            protocol_params = server_cfg.get(protocol, {})
+
+            resolver_cls = get_resolver_class(fmt, protocol)
+            if resolver_cls is None:
+                logger.error("No resolver for format '%s' with server '%s'", fmt, protocol)
+                continue
+
+            server_cls = get_server_class(protocol)
+            if server_cls is None:
+                logger.error("No server implementation for protocol '%s'", protocol)
+                continue
+
+            resolver = resolver_cls(dep_id, identity, fmt_params, args.dest)
+            server = server_cls(protocol_params)
+
+            if args.dry_run:
+                logger.info("[dry-run] fetching %s from %s", identity, protocol_params)
+            else:
+                try:
+                    output_path = resolver.pre_fetch_process()
+                    server_ret = server.fetch(identity, output_path)
+                    resolver.post_fetch_process(server_ret)
+                    break  # 成功したら次の dependency へ
+                except Exception as e:
+                    logger.warning("Server %s failed for %s: %s", protocol, dep_id, e)
         else:
-            try:
-                resolver.resolve()
-            except Exception as e:
-                logger.exception("Failed to resolve %s: %s", dep_id, e)
+            logger.error("All servers failed for dependency %s", dep_id)
 
 if __name__ == "__main__":
     main()

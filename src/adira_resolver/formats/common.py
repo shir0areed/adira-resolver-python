@@ -3,10 +3,10 @@ from .raw_resolver import RawResolver
 from .zip_resolver import ZipResolver
 
 _RESOLVERS = {
-    "pip": PipResolver,
-    "raw": RawResolver,
-    "zip": ZipResolver,
+    ("pip", "index"): PipResolver,
+    ("raw", "oci"): RawResolver,
+    ("zip", "oci"): ZipResolver,
 }
 
-def get_resolver_class(format_name):
-    return _RESOLVERS.get(format_name)
+def get_resolver_class(fmt, protocol):
+    return _RESOLVERS.get((fmt, protocol))
