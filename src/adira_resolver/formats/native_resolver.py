@@ -1,7 +1,7 @@
 import os
 import zipfile
 
-class ZipResolver:
+class NativeResolver:
     def __init__(self, dep_id, identity, fmt_params, dest_root):
         self.dep_id = dep_id
         self.identity = identity

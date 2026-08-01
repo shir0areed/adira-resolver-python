@@ -1,11 +1,9 @@
 from .pip_resolver import PipResolver
-from .raw_resolver import RawResolver
-from .zip_resolver import ZipResolver
+from .native_resolver import NativeResolver
 
 _RESOLVERS = {
     ("pip", "index"): PipResolver,
-    ("raw", "oci"): RawResolver,
-    ("zip", "oci"): ZipResolver,
+    ("native", "oci"): NativeResolver,
 }
 
 def get_resolver_class(fmt, protocol):
