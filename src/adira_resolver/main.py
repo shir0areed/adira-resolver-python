@@ -76,9 +76,9 @@ def main(argv=None):
                 logger.info("[dry-run] fetching %s from %s", identity, protocol_params)
             else:
                 try:
-                    output_path = resolver.pre_fetch_process()
-                    server_ret = server.fetch(identity, output_path)
-                    resolver.post_fetch_process(server_ret)
+                    with resolver.pre_fetch_process() as output_path:
+                        server_ret = server.fetch(identity, output_path)
+                        resolver.post_fetch_process(server_ret)
                     break  # 成功したら次の dependency へ
                 except Exception as e:
                     logger.warning("Server %s failed for %s: %s", protocol, dep_id, e)

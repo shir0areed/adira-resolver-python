@@ -5,6 +5,7 @@ dependencies = [
     "tomli-w",
     "requests",
     "packaging",
+    "py7zz",
 ]
 
 [tool.setuptools.packages.find]
