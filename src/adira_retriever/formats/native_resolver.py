@@ -49,6 +49,7 @@ class NativeResolverFromFile:
     # -------------------------
     def _place(self, tempdir: Path, server, final_dir: Path):
         if final_dir.exists() and any(final_dir.iterdir()):
+            # 上書き展開は順序で結果が変わる可能性があるので認めない
             logger.info("native transform: final_dir %s already exists and is not empty; skipping", final_dir)
             return
 
