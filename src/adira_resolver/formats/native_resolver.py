@@ -48,6 +48,10 @@ class NativeResolverFromFile:
     # 最終配置処理（旧 post_fetch_process）
     # -------------------------
     def _place(self, tempdir: Path, server, final_dir: Path):
+        if final_dir.exists() and any(final_dir.iterdir()):
+            logger.info("native transform: final_dir %s already exists and is not empty; skipping", final_dir)
+            return
+
         dry_run = tempdir is None
 
         # 2. server.fetch(tempdir) → blob_path
