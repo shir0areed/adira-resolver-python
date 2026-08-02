@@ -6,7 +6,7 @@ import venv
 import socket
 
 
-APP_MODULE = 'adira_resolver'
+APP_MODULE = 'adira_retriever'
 
 
 def find_free_port():

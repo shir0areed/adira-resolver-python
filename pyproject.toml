@@ -1,5 +1,5 @@
 [project]
-name = "adira-resolver"
+name = "adira-retriever"
 version = "0.1.0"
 dependencies = [
     "tomli-w",

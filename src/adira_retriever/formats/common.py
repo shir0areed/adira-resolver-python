@@ -1,4 +1,4 @@
-from adira_resolver.protocols.semantics import ServerSemantics
+from adira_retriever.protocols.semantics import ServerSemantics
 
 from .pip_resolver import *
 from .native_resolver import *
