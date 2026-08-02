@@ -32,6 +32,31 @@ class IndexServer:
 
         return artifact + version_spec
 
+    def is_installed(self, venv_python: Path, identity: dict) -> bool:
+        artifact = identity["artifact"]
+        version = identity.get("version")
+
+        code = (
+            "from importlib.metadata import version as v, PackageNotFoundError\n"
+            "import sys\n"
+            "name = sys.argv[1]\n"
+            "ver = sys.argv[2] if len(sys.argv) > 2 else None\n"
+            "try:\n"
+            "    installed = v(name)\n"
+            "except PackageNotFoundError:\n"
+            "    sys.exit(1)\n"
+            "if ver and installed != ver:\n"
+            "    sys.exit(1)\n"
+            "sys.exit(0)\n"
+        )
+
+        cmd = [str(venv_python), "-c", code, artifact]
+        if version:
+            cmd.append(version)
+
+        result = subprocess.call(cmd)
+        return result == 0
+
     def fetch(self, identity, output_path, dry_run=False):
         """
         pip フォーマット仕様書に従い、
@@ -49,6 +74,10 @@ class IndexServer:
 
         # 仕様書通り、venv_python = context.env_exe
         venv_python = Path(context.env_exe)
+
+        if self.is_installed(venv_python, identity):
+            logger.info("Already installed (fast-skip): %s", identity)
+            return None
 
         # identity → Requirement Specifier に変換
         requirement = self.build_requirement_specifier(identity)
