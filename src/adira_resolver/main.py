@@ -75,7 +75,8 @@ def main(argv=None):
 
             try:
                 resolver.retrieve(server, args.dry_run)
-                break  # 成功したら次の dependency へ
+                if not args.dry_run:
+                    break  # 成功したら次の dependency へ
             except Exception as e:
                 logger.warning("Server %s failed for %s: %s", protocol, dep_id, e)
         else:
