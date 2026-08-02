@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import sys
+import shutil
 from pathlib import Path
 import logging
 from .config import load_config
@@ -16,6 +17,7 @@ def parse_args(argv):
     p.add_argument("--config", "-c", default="./config.toml", help="Path to resolver config TOML")
     p.add_argument("--dest", "-d", help="Resolve destination directory")
     p.add_argument("--dry-run", action="store_true", help="Show actions without performing them")
+    p.add_argument("--force", action="store_true", help="Delete and recreate retrieval_dir before resolving")
     p.add_argument("manifests", nargs=1, help="Path to manifest TOML (main file)")
     return p.parse_args(argv)
 
@@ -68,7 +70,14 @@ def main(argv=None):
         dest_dir = parent / unique_name
 
     logger.info("Using retrieval_dir: %s", dest_dir)
-    
+
+    if args.force:
+        if args.dry_run:
+            logger.info("[dry-run] Would remove existing retrieval_dir: %s", dest_dir)
+        else:
+            if dest_dir.exists():
+                shutil.rmtree(dest_dir)
+
     if not args.dry_run:
         dest_dir.mkdir(parents=True, exist_ok=True)
 
