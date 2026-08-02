@@ -36,7 +36,9 @@ class PipResolverFromPipIndex:
             logger.info("[dry-run] creating venv for %s at %s", self.identity, venv_dir)
         else:
             builder = venv.EnvBuilder(with_pip=True)
-            builder.create(str(venv_dir))
+            context = builder.ensure_directories(str(venv_dir))
+            if not Path(context.env_exe).exists():
+                builder.create(str(venv_dir))
 
         # 2. server.fetch を呼ぶ（pip install）
         server.fetch(self.identity, venv_dir, dry_run)
