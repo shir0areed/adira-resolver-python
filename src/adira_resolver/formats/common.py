@@ -1,7 +1,7 @@
 from adira_resolver.protocols.semantics import ServerSemantics
 
-from .pip_resolver import PipResolverFromPipIndex
-from .native_resolver import NativeResolverFromFile
+from .pip_resolver import *
+from .native_resolver import *
 
 _RESOLVERS = {
     ("pip", ServerSemantics.PIP_INDEX): PipResolverFromPipIndex,
