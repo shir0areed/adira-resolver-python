@@ -59,14 +59,14 @@ def main(argv=None):
 
             protocol_params = server_cfg.get(protocol, {})
 
-            resolver_cls = get_resolver_class(fmt, protocol)
-            if resolver_cls is None:
-                logger.error("No resolver for format '%s' with server '%s'", fmt, protocol)
-                continue
-
             server_cls = get_server_class(protocol)
             if server_cls is None:
                 logger.error("No server implementation for protocol '%s'", protocol)
+                continue
+
+            resolver_cls = get_resolver_class(fmt, server_cls.get_server_semantics())
+            if resolver_cls is None:
+                logger.error("No resolver for format '%s' with server '%s'", fmt, protocol)
                 continue
 
             resolver = resolver_cls(dep_id, identity, fmt_params, args.dest)

@@ -2,9 +2,15 @@ import subprocess
 from pathlib import Path
 import venv
 
+from .semantics import ServerSemantics
+
 class IndexServer:
     def __init__(self, protocol_params):
         self.extra_index_url = protocol_params.get("extra_index_url")
+
+    @staticmethod
+    def get_server_semantics():
+        return ServerSemantics.PIP_INDEX
 
     def build_requirement_specifier(self, identity):
         vendor = identity.get("vendor", "")

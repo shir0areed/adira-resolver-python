@@ -1,12 +1,18 @@
 from pathlib import Path
 import requests
 
+from .semantics import ServerSemantics
+
 class OCIServer:
     def __init__(self, protocol_params):
         self.base_url = protocol_params.get("base_url").rstrip("/")
 
     def _hex(self, s: str) -> str:
         return s.encode("utf-8").hex()
+
+    @staticmethod
+    def get_server_semantics():
+        return ServerSemantics.FILE
 
     def fetch(self, identity, output_dir: Path):
         """
