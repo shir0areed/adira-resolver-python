@@ -4,7 +4,7 @@ import tempfile
 from py7zz import SevenZipFile
 
 
-class NativeResolver:
+class NativeResolverFromFile:
     def __init__(self, dep_id, identity, fmt_params, retrieval_dir):
         self.dep_id = dep_id
         self.identity = identity

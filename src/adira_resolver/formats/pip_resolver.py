@@ -1,7 +1,7 @@
 import venv
 from pathlib import Path
 
-class PipResolver:
+class PipResolverFromPipIndex:
     def __init__(self, dep_id, identity, fmt_params, dest_root):
         self.dep_id = dep_id
         self.identity = identity
