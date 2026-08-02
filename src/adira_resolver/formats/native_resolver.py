@@ -82,17 +82,15 @@ class NativeResolverFromFile:
 
                 strip_root = self._get_strip_root_params(transform)
 
-                if strip_root:
-                    # 一階層目（ルートディレクトリ配下）を final_dir に移動
-                    root = self._detect_single_root_dir(extract_temp)
-                    for item in root.iterdir():
-                        target = final_dir / item.name
-                        self._safe_move(item, target)
-                else:
-                    # 二階層目（extract_temp 直下）を final_dir に移動
-                    for item in extract_temp.iterdir():
-                        target = final_dir / item.name
-                        self._safe_move(item, target)
+                root = self._detect_single_root_dir(extract_temp) if strip_root else None
+
+                # root が使えるなら root、ダメなら extract_temp
+                base = root if root is not None else extract_temp
+
+                # base の中身を final_dir に移動
+                for item in base.iterdir():
+                    target = final_dir / item.name
+                    self._safe_move(item, target)
 
     # -------------------------
     # 汎用アーカイブ → py7zz
@@ -113,12 +111,14 @@ class NativeResolverFromFile:
             raise RuntimeError(f"native transform: '{dst}' already exists")
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(src), str(dst))
-
-    def _detect_single_root_dir(self, base: Path) -> Path:
-        entries = [e for e in base.iterdir() if e.is_dir()]
+            
+    def _detect_single_root_dir(self, base: Path) -> Path | None:
+        entries = list(base.iterdir())
         if len(entries) != 1:
-            raise RuntimeError("native transform strip_root: 直下に 1 つのルートディレクトリが存在しません")
-        return entries[0]
+            return None
+
+        only = entries[0]
+        return only if only.is_dir() else None
 
     def _get_strip_root_params(self, transform: str) -> bool:
         params = self.fmt_params.get(transform, {})
