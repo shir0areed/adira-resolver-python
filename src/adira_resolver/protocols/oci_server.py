@@ -1,7 +1,10 @@
 from pathlib import Path
+import logging
 import requests
 
 from .semantics import ServerSemantics
+
+logger = logging.getLogger(__name__)
 
 class OCIServer:
     def __init__(self, protocol_params):
@@ -14,7 +17,7 @@ class OCIServer:
     def get_server_semantics():
         return ServerSemantics.FILE
 
-    def fetch(self, identity, output_dir: Path):
+    def fetch(self, identity, output_dir: Path, dry_run=False):
         """
         identity: {"vendor", "artifact", "version", "format"}
         output_dir: フォルダ（ここに blob をファイル名で保存する）
@@ -32,6 +35,10 @@ class OCIServer:
             manifest_url = f"{self.base_url}/v2/{vendor_hex}/{artifact_hex}/manifests/{version}"
         else:
             manifest_url = f"{self.base_url}/v2/{artifact_hex}/manifests/{version}"
+
+        if dry_run:
+            logger.info("[dry-run] fetching %s with manifest from %s", identity, manifest_url)
+            return None
 
         manifest_resp = requests.get(manifest_url)
         manifest_resp.raise_for_status()

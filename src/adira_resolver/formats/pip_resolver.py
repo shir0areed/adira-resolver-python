@@ -1,5 +1,8 @@
 import venv
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PipResolverFromPipIndex:
     """
@@ -16,7 +19,7 @@ class PipResolverFromPipIndex:
         self.fmt_params = fmt_params
         self.dest_root = Path(dest_root)
 
-    def retrieve(self, server):
+    def retrieve(self, server, dry_run=False):
         """
         pre_fetch_process + fetch + post_fetch_process を統合したメソッド。
 
@@ -28,13 +31,15 @@ class PipResolverFromPipIndex:
         # 1. venv を構築
         rel_path = self.fmt_params.get("venv_path", self.dep_id)
         venv_dir = self.dest_root / rel_path
-        venv_dir.mkdir(parents=True, exist_ok=True)
 
-        builder = venv.EnvBuilder(with_pip=True)
-        builder.create(str(venv_dir))
+        if dry_run:
+            logger.info("[dry-run] creating venv for %s at %s", self.identity, venv_dir)
+        else:
+            builder = venv.EnvBuilder(with_pip=True)
+            builder.create(str(venv_dir))
 
         # 2. server.fetch を呼ぶ（pip install）
-        server.fetch(self.identity, venv_dir)
+        server.fetch(self.identity, venv_dir, dry_run)
 
         # 3. pip index 方式では post は不要
         return None

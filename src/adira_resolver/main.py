@@ -22,7 +22,8 @@ def main(argv=None):
     args = parse_args(argv or sys.argv[1:])
     config = load_config(args.config)
     manifest = load_manifest_with_additions(args.manifests[0])
-    os.makedirs(args.dest, exist_ok=True)
+    if not args.dry_run:
+        os.makedirs(args.dest, exist_ok=True)
 
     # For each dependency, dispatch to format resolver
     for dep_id, dep in manifest["dependencies"].items():
@@ -72,14 +73,11 @@ def main(argv=None):
             resolver = resolver_cls(dep_id, identity, fmt_params, args.dest)
             server = server_cls(protocol_params)
 
-            if args.dry_run:
-                logger.info("[dry-run] fetching %s from %s", identity, protocol_params)
-            else:
-                try:
-                    resolver.retrieve(server)
-                    break  # 成功したら次の dependency へ
-                except Exception as e:
-                    logger.warning("Server %s failed for %s: %s", protocol, dep_id, e)
+            try:
+                resolver.retrieve(server, args.dry_run)
+                break  # 成功したら次の dependency へ
+            except Exception as e:
+                logger.warning("Server %s failed for %s: %s", protocol, dep_id, e)
         else:
             logger.error("All servers failed for dependency %s", dep_id)
 

@@ -1,8 +1,11 @@
 import subprocess
 from pathlib import Path
+import logging
 import venv
 
 from .semantics import ServerSemantics
+
+logger = logging.getLogger(__name__)
 
 class IndexServer:
     def __init__(self, protocol_params):
@@ -29,12 +32,16 @@ class IndexServer:
 
         return artifact + version_spec
 
-    def fetch(self, identity, output_path):
+    def fetch(self, identity, output_path, dry_run=False):
         """
         pip フォーマット仕様書に従い、
         output_path（venv）内に pip install を行う。
         """
         venv_dir = Path(output_path)
+
+        if dry_run:
+            logger.info("[dry-run] installing %s into %s", identity, venv_dir)
+            return None
 
         # venv を構築（pip入り）
         builder = venv.EnvBuilder(with_pip=True)
