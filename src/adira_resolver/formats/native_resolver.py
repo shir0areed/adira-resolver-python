@@ -5,24 +5,46 @@ from py7zz import SevenZipFile
 
 
 class NativeResolverFromFile:
+    """
+    File semantics:
+        server.fetch(output_dir) -> output_file (Path)
+    resolver responsibilities:
+        1. output_dir を作る
+        2. server.fetch(output_dir) を呼ぶ
+        3. 返ってきた blob を native transform に従って最終配置する
+    """
+
     def __init__(self, dep_id, identity, fmt_params, retrieval_dir):
         self.dep_id = dep_id
         self.identity = identity
         self.fmt_params = fmt_params
         self.retrieval_dir = Path(retrieval_dir)
 
-    def pre_fetch_process(self):
+    def retrieve(self, server):
         """
-        with 文で扱える TemporaryDirectory を返す。
-        OCIServer はこのフォルダ内に blob をファイル名で保存する。
-        """
-        return tempfile.TemporaryDirectory(prefix=f"adira_native_{self.dep_id}_")
+        pre_fetch_process + fetch + post_fetch_process を統合したメソッド。
 
-    def post_fetch_process(self, blob_path):
+        1. blob を受け取るための tempdir を作る
+        2. server.fetch(tempdir) を呼ぶ（File semantics: blob_path が返る）
+        3. blob_path を native transform に従って最終配置する
         """
-        blob を native フォーマット仕様に従って
-        最終配置先へ移動・展開する。
-        """
+
+        # 1. blob を受け取るための tempdir
+        with tempfile.TemporaryDirectory(prefix=f"adira_native_{self.dep_id}_") as tempdir_str:
+            tempdir = Path(tempdir_str)
+
+            # 2. server.fetch(tempdir) → blob_path
+            blob_path = server.fetch(self.identity, tempdir)
+
+            # 3. native transform に従って最終配置
+            self._place_final(blob_path)
+
+        return None
+
+    # -------------------------
+    # 最終配置処理（旧 post_fetch_process）
+    # -------------------------
+    def _place_final(self, blob_path: Path):
         dst_root = self.fmt_params.get("dst_root", "native")
         dst_rel = self.fmt_params.get("dst", self.dep_id)
         final_dir = self.retrieval_dir / dst_root / dst_rel
