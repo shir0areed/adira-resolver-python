@@ -85,7 +85,7 @@ def main(argv=None):
     for dep_id, dep in manifest["dependencies"].items():
         identity = {
             "vendor": dep.get("vendor"),
-            "artifact": dep.get("artifact"),
+            "artifact": dep.get("artifact", dep_id),
             "version": dep.get("version"),
             "format": dep.get("format"),
         }
